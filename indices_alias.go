@@ -1,14 +1,13 @@
-package esx_indices
+package esx
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
-	"github.com/bjfuzj/esx"
 )
 
-func AliasAction(client *esx.Client, aliasname string, actions []map[string]map[string]string) error {
+// AliasAction 执行alias操作
+func AliasAction(client *Client, aliasname string, actions []map[string]map[string]string) error {
 	reqdata := map[string][]map[string]map[string]string{
 		"actions": actions,
 	}
@@ -19,7 +18,7 @@ func AliasAction(client *esx.Client, aliasname string, actions []map[string]map[
 		return fmt.Errorf("执行alias[%s]变更失败", aliasname)
 	}
 
-	var resp esx.Ack
+	var resp Ack
 	err := json.Unmarshal(rdata, &resp)
 	if err != nil {
 		return fmt.Errorf("变更alias[%s]的响应结果解析失败: %s", aliasname, err.Error())
@@ -32,10 +31,11 @@ func AliasAction(client *esx.Client, aliasname string, actions []map[string]map[
 	return nil
 }
 
-func AliasQuery(client *esx.Client, aliasname string) ([]string, error) {
+// AliasQuery 查询当前指定alias配置
+func AliasQuery(client *Client, aliasname string) ([]string, error) {
 	uri := fmt.Sprintf("_alias/%s", aliasname)
 	code, rdata := client.GetResponse("GET", uri, "", map[string]string{})
-	if code >= esx.HTTP_SELF_CODE {
+	if code >= HTTP_SELF_CODE {
 		return nil, errors.New("发起alias请求失败")
 	}
 
@@ -60,10 +60,11 @@ func AliasQuery(client *esx.Client, aliasname string) ([]string, error) {
 	return ret, nil
 }
 
+// AliasActionWithPool 执行指定alias操作
 func AliasActionWithPool(aliasname string, actions []map[string]map[string]string) error {
-	client := esx.Pool.Get()
+	client := Pool.Get()
 	if client != nil {
-		defer esx.Pool.Put(client)
+		defer Pool.Put(client)
 	}
 
 	reqdata := map[string][]map[string]map[string]string{
@@ -76,7 +77,7 @@ func AliasActionWithPool(aliasname string, actions []map[string]map[string]strin
 		return fmt.Errorf("执行alias[%s]变更失败", aliasname)
 	}
 
-	var resp esx.Ack
+	var resp Ack
 	err := json.Unmarshal(rdata, &resp)
 	if err != nil {
 		return fmt.Errorf("变更alias[%s]的响应结果解析失败: %s", aliasname, err.Error())
@@ -89,15 +90,16 @@ func AliasActionWithPool(aliasname string, actions []map[string]map[string]strin
 	return nil
 }
 
+// AliasQueryWithPool 查询当前alias配置
 func AliasQueryWithPool(aliasname string) ([]string, error) {
-	client := esx.Pool.Get()
+	client := Pool.Get()
 	if client != nil {
-		defer esx.Pool.Put(client)
+		defer Pool.Put(client)
 	}
 
 	uri := fmt.Sprintf("_alias/%s", aliasname)
 	code, rdata := client.GetResponse("GET", uri, "", map[string]string{})
-	if code >= esx.HTTP_SELF_CODE {
+	if code >= HTTP_SELF_CODE {
 		return nil, errors.New("发起alias请求失败")
 	}
 

@@ -1,12 +1,11 @@
-package esx_indices
+package esx
 
 import (
 	"encoding/json"
-
-	"github.com/bjfuzj/esx"
 )
 
-func Create(client *esx.Client, indexname string) bool {
+// Create 创建指定index
+func Create(client *Client, indexname string) bool {
 	if Exist(client, indexname) {
 		return true
 	}
@@ -16,7 +15,7 @@ func Create(client *esx.Client, indexname string) bool {
 		return false
 	}
 
-	var resp esx.Ack
+	var resp Ack
 	err := json.Unmarshal(rdata, &resp)
 	if err != nil {
 		return false
@@ -25,14 +24,15 @@ func Create(client *esx.Client, indexname string) bool {
 	return resp.Acknowledged
 }
 
+// CreateWithPool 创建指定index
 func CreateWithPool(indexname string) bool {
 	if ExistWithPool(indexname) {
 		return true
 	}
 
-	client := esx.Pool.Get()
+	client := Pool.Get()
 	if client != nil {
-		defer esx.Pool.Put(client)
+		defer Pool.Put(client)
 	}
 
 	code, rdata := client.GetResponse("PUT", indexname, "", map[string]string{})
@@ -40,7 +40,7 @@ func CreateWithPool(indexname string) bool {
 		return false
 	}
 
-	var resp esx.Ack
+	var resp Ack
 	err := json.Unmarshal(rdata, &resp)
 	if err != nil {
 		return false

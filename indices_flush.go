@@ -1,10 +1,8 @@
-package esx_indices
+package esx
 
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/bjfuzj/esx"
 )
 
 // {
@@ -24,7 +22,9 @@ type flushRespTemp struct {
 	Status int `json:"status"`
 }
 
-func Flush(client *esx.Client, indexname string) bool {
+// Flush 刷新index
+// true => 成功, false => 失败
+func Flush(client *Client, indexname string) bool {
 	uri := fmt.Sprintf("%s/_flush", indexname)
 
 	code, rdata := client.GetResponse("POST", uri, "", map[string]string{})
@@ -49,12 +49,14 @@ func Flush(client *esx.Client, indexname string) bool {
 	return true
 }
 
+// FlushWithPool 刷新index
+// true => 成功, false => 失败
 func FlushWithPool(indexname string) bool {
 	uri := fmt.Sprintf("%s/_flush", indexname)
 
-	client := esx.Pool.Get()
+	client := Pool.Get()
 	if client != nil {
-		defer esx.Pool.Put(client)
+		defer Pool.Put(client)
 	}
 
 	code, rdata := client.GetResponse("POST", uri, "", map[string]string{})

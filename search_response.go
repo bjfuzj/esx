@@ -1,4 +1,4 @@
-package esx_search
+package esx
 
 import (
 	"encoding/json"
@@ -12,6 +12,7 @@ type HitsResponse struct {
 	Source map[string]any `json:"_source"`
 }
 
+// SearchResponse ES响应的报文结构体
 type SearchResponse struct {
 	Timeout bool `json:"timed_out"`
 	Shards  struct {
@@ -26,6 +27,7 @@ type SearchResponse struct {
 	Aggs map[string]json.RawMessage `json:"aggregations"`
 }
 
+// SearchResult 自动解析后的结构体
 type SearchResult struct {
 	Total int64            `json:"total"`
 	Hits  []map[string]any `json:"hits"`

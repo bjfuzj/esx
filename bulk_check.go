@@ -1,11 +1,9 @@
-package esx_bulk
+package esx
 
 import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/bjfuzj/esx"
 )
 
 func (c *BulkClient) reset() {
@@ -32,7 +30,7 @@ func (c *BulkClient) checkResp(rdata []byte) bool {
 		c.logger.Error(fmt.Sprintf("线程号[%d], bulk发生错误", c.tid))
 		for idx, x := range resp.Iterms {
 			if x.Index.RetInfo.Reason != "" {
-				if x.Index.RetInfo.Type == esx.ES_REJECTED_ERROR {
+				if x.Index.RetInfo.Type == ES_REJECTED_ERROR {
 					c.logger.Warn(fmt.Sprintf("原始数据: %s, 错误原因: %s", c.rawdatas[idx]["msg"], x.Index.RetInfo.Reason))
 					if !ss {
 						c.datas.Reset()

@@ -1,4 +1,4 @@
-package esx_bulk
+package esx
 
 import (
 	"encoding/json"
@@ -23,6 +23,7 @@ func (c *BulkClient) getMetaData(indexname, typename string) string {
 }
 
 // Add 插入一条记录
+// 返回执行的条目数 + 耗时, 提供给可能的统计模块
 func (c *BulkClient) Add(indexname, typename, message string) (int, time.Duration) {
 	metadata := c.getMetaData(indexname, typename)
 
@@ -52,6 +53,7 @@ func (c *BulkClient) Add(indexname, typename, message string) (int, time.Duratio
 }
 
 // Tick 提供外部Ticker调用
+// 返回执行的条目数 + 耗时, 提供给可能的统计模块
 func (c *BulkClient) Tick() (int, time.Duration) {
 	if c.ct > 0 && time.Since(c.lastTime) > c.maxTime {
 		c.logger.Debug(fmt.Sprintf("线程号[%d], 超过最大时间限制, 共提交%d条记录", c.tid, c.ct))
@@ -62,6 +64,7 @@ func (c *BulkClient) Tick() (int, time.Duration) {
 }
 
 // Send 当调用方推出循环后, 如果缓冲中仍然有数据的, 调用该方法完成发送
+// 返回执行的条目数 + 耗时, 提供给可能的统计模块
 func (c *BulkClient) Send() (int, time.Duration) {
 	if c.ct > 0 {
 		c.logger.Info(fmt.Sprintf("线程号[%d], 将剩余的[%d]条数据发送", c.tid, c.ct))

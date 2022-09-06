@@ -1,4 +1,4 @@
-package esx_bulk
+package esx
 
 import (
 	"encoding/json"

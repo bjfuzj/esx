@@ -1,12 +1,12 @@
-package esx_indices
+package esx
 
 import (
 	"encoding/json"
-
-	"github.com/bjfuzj/esx"
 )
 
-func Del(client *esx.Client, indexList []string) []string {
+// Del 删除指定index
+// 返回删除失败的index列表
+func Del(client *Client, indexList []string) []string {
 	ret := make([]string, 0)
 
 	for _, indexname := range indexList {
@@ -16,7 +16,7 @@ func Del(client *esx.Client, indexList []string) []string {
 			continue
 		}
 
-		var resp esx.Ack
+		var resp Ack
 		err := json.Unmarshal(rdata, &resp)
 		if err != nil {
 			ret = append(ret, indexname)
@@ -31,10 +31,12 @@ func Del(client *esx.Client, indexList []string) []string {
 	return ret
 }
 
+// DelWithPool 删除指定index
+// 返回删除失败的index列表
 func DelWithPool(indexList []string) []string {
-	client := esx.Pool.Get()
+	client := Pool.Get()
 	if client != nil {
-		defer esx.Pool.Put(client)
+		defer Pool.Put(client)
 	}
 
 	ret := make([]string, 0)
@@ -46,7 +48,7 @@ func DelWithPool(indexList []string) []string {
 			continue
 		}
 
-		var resp esx.Ack
+		var resp Ack
 		err := json.Unmarshal(rdata, &resp)
 		if err != nil {
 			ret = append(ret, indexname)

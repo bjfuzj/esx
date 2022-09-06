@@ -1,19 +1,20 @@
-package esx_template
+package esx
 
 import (
 	"fmt"
-
-	"github.com/bjfuzj/esx"
 )
 
-func Exist(client *esx.Client, name string) bool {
+// TempExist 判断模板是否存在
+// true => 存在, false => 不存在
+func TempExist(client *Client, name string) bool {
 	uri := fmt.Sprintf("_template/%s", name)
 
 	code, _ := client.GetResponse("GET", uri, "", map[string]string{})
 	return code < 400
 }
 
-func Create(client *esx.Client, name string, qdata []byte) error {
+// TempCreate 创建模板
+func TempCreate(client *Client, name string, qdata []byte) error {
 	uri := fmt.Sprintf("_template/%s", name)
 
 	code, rdata := client.GetResponse("PUT", uri, string(qdata), map[string]string{})
@@ -24,24 +25,27 @@ func Create(client *esx.Client, name string, qdata []byte) error {
 	return nil
 }
 
-func ExistWithPool(name string) bool {
+// TempExistWithPool 判断模板是否存在
+// true => 存在, false => 不存在
+func TempExistWithPool(name string) bool {
 	uri := fmt.Sprintf("_template/%s", name)
 
-	client := esx.Pool.Get()
+	client := Pool.Get()
 	if client != nil {
-		defer esx.Pool.Put(client)
+		defer Pool.Put(client)
 	}
 
 	code, _ := client.GetResponse("GET", uri, "", map[string]string{})
 	return code < 400
 }
 
-func CreateWithPool(name string, qdata []byte) error {
+// TempCreateWithPool 创建模板
+func TempCreateWithPool(name string, qdata []byte) error {
 	uri := fmt.Sprintf("_template/%s", name)
 
-	client := esx.Pool.Get()
+	client := Pool.Get()
 	if client != nil {
-		defer esx.Pool.Put(client)
+		defer Pool.Put(client)
 	}
 
 	code, rdata := client.GetResponse("PUT", uri, string(qdata), map[string]string{})

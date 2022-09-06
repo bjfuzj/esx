@@ -1,12 +1,10 @@
-package esx_search
+package esx
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
-
-	"github.com/bjfuzj/esx/utils"
 )
 
 // rest_total_hits_as_int=true
@@ -17,6 +15,7 @@ import (
 // 	Responses []SearchResponse `json:"responses"`
 // }
 
+// ScriptedMetric 提供给scripted_metric专用结构体
 type ScriptedMetric struct {
 	Toggle        bool           `json:"toggle,omitempty"` // 定义是否展开script结果集, 默认不展开, 通常只有结果是单层map如 map[string]int 时才有展开需求
 	Params        map[string]any `json:"params,omitempty"`
@@ -26,6 +25,7 @@ type ScriptedMetric struct {
 	ReduceScript  string         `json:"reduce_script"`
 }
 
+// EasyRequest 简易的ES请求结构体, 会自动封装实际的DSL
 type EasyRequest struct {
 	Size           int64               `json:"size"`
 	PreIndex       string              `json:"preIndex"`
@@ -44,6 +44,7 @@ type EasyRequest struct {
 	ScriptedMetric *ScriptedMetric     `json:"scripted_metric,omitempty"`
 }
 
+// SearchRequest 实际的DSL请求结构体
 type SearchRequest struct {
 	Indices []string `json:"-"`
 	Size    int64    `json:"size"`
@@ -88,12 +89,12 @@ func NewSearchRequest(in *EasyRequest) (SearchRequest, error) {
 		timeTill := in.TimeTill + 3600*1000*in.TimeShift
 		indices := make(map[string]uint8, 0)
 		for timeFrom < timeTill {
-			indexsuffix := time.UnixMilli(timeFrom).Format(utils.GetTimeTemps(in.TimePattern))
+			indexsuffix := time.UnixMilli(timeFrom).Format(GetTimeTemps(in.TimePattern))
 			key := fmt.Sprintf("%s-%s", in.PreIndex, indexsuffix)
 			indices[key] = 1
 			timeFrom += 86400 * 1000
 		}
-		indexsuffix := time.UnixMilli(timeTill).Format(utils.GetTimeTemps(in.TimePattern))
+		indexsuffix := time.UnixMilli(timeTill).Format(GetTimeTemps(in.TimePattern))
 		key := fmt.Sprintf("%s-%s", in.PreIndex, indexsuffix)
 		indices[key] = 1
 

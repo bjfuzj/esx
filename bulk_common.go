@@ -1,10 +1,9 @@
-package esx_bulk
+package esx
 
 import (
 	"bytes"
 	"time"
 
-	"github.com/bjfuzj/esx"
 	"go.uber.org/zap"
 )
 
@@ -21,7 +20,7 @@ type bulkRespTemp struct {
 	} `json:"items"`
 }
 
-type Option struct {
+type BulkOption struct {
 	Tid     int
 	MaxCT   int
 	MaxSize int
@@ -32,7 +31,7 @@ type BulkClient struct {
 	running bool
 	logger  *zap.Logger
 	tid     int
-	client  *esx.Client
+	client  *Client
 
 	ct       int
 	maxCT    int
@@ -45,7 +44,7 @@ type BulkClient struct {
 	rawdatas []map[string]string
 }
 
-func NewBulkClient(logger *zap.Logger, client *esx.Client, opt Option) *BulkClient {
+func NewBulkClient(logger *zap.Logger, client *Client, opt BulkOption) *BulkClient {
 	return &BulkClient{
 		running: true,
 		logger:  logger,
