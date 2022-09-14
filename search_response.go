@@ -59,6 +59,23 @@ func ParseSearchResult(in []byte, req *EasyRequest) (SearchResult, error) {
 		return ret, err
 	}
 
+	ret.Total = resp.Hits.Total
+	ret.Hits = make([]map[string]any, 0)
+	for _, x := range resp.Hits.Hits {
+		ret.Hits = append(ret.Hits, x.Source)
+	}
+
+	if ret.Total == 0 {
+		// 未匹配到任意doc时, 自然无聚合数据
+		ret.Aggs = make([]map[string]any, 0)
+		return ret, nil
+	}
+	if resp.Aggs == nil {
+		// 无aggregations时
+		ret.Aggs = make([]map[string]any, 0)
+		return ret, nil
+	}
+
 	// 组装解析参数
 	terms := make([]string, 0)
 	funcs := make([]string, 0)
@@ -81,17 +98,16 @@ func ParseSearchResult(in []byte, req *EasyRequest) (SearchResult, error) {
 		toggle = req.ScriptedMetric.Toggle
 	}
 
-	aggs, err := parseAggs(resp.Aggs, 0, toggle, terms, funcs)
+	if len(terms) == 0 && len(funcs) == 0 {
+		// 无聚合请求
+		ret.Aggs = make([]map[string]any, 0)
+		return ret, nil
+	}
+
+	ret.Aggs, err = parseAggs(resp.Aggs, 0, toggle, terms, funcs)
 	if err != nil {
 		return ret, fmt.Errorf("聚合数据递归解析失败: %s", err.Error())
 	}
-
-	ret.Total = resp.Hits.Total
-	ret.Hits = make([]map[string]any, 0)
-	for _, x := range resp.Hits.Hits {
-		ret.Hits = append(ret.Hits, x.Source)
-	}
-	ret.Aggs = aggs
 
 	return ret, nil
 }
