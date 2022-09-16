@@ -23,6 +23,9 @@ const (
 	HTTP_RESP_READ_FAIL = 902 // 响应数据读取失败
 
 	ES_REJECTED_ERROR = "es_rejected_execution_exception"
+
+	CONTENT_TYPE     = "Content-Type"
+	APPLICATION_JSON = "application/json"
 )
 
 var (

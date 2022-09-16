@@ -101,6 +101,10 @@ func (c *Client) GetResponse(method, uri, data string, headers map[string]string
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
+	// 2022-09-16 修复, 若未设置Content-Type, 则添加默认
+	if req.Header.Get(CONTENT_TYPE) == "" {
+		req.Header.Set(CONTENT_TYPE, APPLICATION_JSON)
+	}
 
 	resp, err := c.client.Do(req)
 	if resp != nil {
