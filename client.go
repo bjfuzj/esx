@@ -12,21 +12,38 @@ import (
 	"go.uber.org/zap"
 )
 
+func formatAddrs(addrs []string) []string {
+	ret := make([]string, 0)
+	for _, x := range addrs {
+		if strings.HasPrefix(x, "http://") || strings.HasPrefix(x, "https://") {
+			ret = append(ret, x)
+		} else {
+			ret = append(ret, fmt.Sprintf("http://%s", x))
+		}
+	}
+
+	return ret
+}
+
 func NewClient(logger *zap.Logger, opt Option) (*Client, error) {
 	if len(opt.Addrs) == 0 {
 		return nil, errors.New("ES地址列表为空")
 	}
 
-	headers := make(map[string]string)
+	headers := map[string]string{
+		"Content-Type": "application/json",
+	}
 	if opt.Username != "" && opt.Password != "" {
 		auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", opt.Username, opt.Password)))
 		headers["Authorization"] = fmt.Sprintf("Basic %s", auth)
 	}
 
+	addrs := formatAddrs(opt.Addrs)
+
 	return &Client{
 		tid:    0,
 		logger: logger,
-		addrs:  opt.Addrs,
+		addrs:  addrs,
 		client: &http.Client{
 			Timeout: opt.Timeout,
 		},
@@ -39,16 +56,20 @@ func NewClientWithID(logger *zap.Logger, opt Option, tid int) (*Client, error) {
 		return nil, errors.New("ES地址列表为空")
 	}
 
-	headers := make(map[string]string)
+	headers := map[string]string{
+		"Content-Type": "application/json",
+	}
 	if opt.Username != "" && opt.Password != "" {
 		auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", opt.Username, opt.Password)))
 		headers["Authorization"] = fmt.Sprintf("Basic %s", auth)
 	}
 
+	addrs := formatAddrs(opt.Addrs)
+
 	return &Client{
 		tid:    tid,
 		logger: logger,
-		addrs:  opt.Addrs,
+		addrs:  addrs,
 		client: &http.Client{
 			Timeout: opt.Timeout,
 		},
@@ -84,9 +105,10 @@ func (c *Client) geturl(uri string) string {
 	ret := fmt.Sprintf("%s/%s", c.addrs[c.node], uri)
 	c.node = (c.node + 1) % len(c.addrs)
 
-	if !strings.HasPrefix(ret, "http://") && !strings.HasPrefix(ret, "https://") {
-		ret = fmt.Sprintf("http://%s", ret)
-	}
+	// 2022-09-18 改成在初始化的时候判定添加, 使用 formatAddrs 函数
+	// if !strings.HasPrefix(ret, "http://") && !strings.HasPrefix(ret, "https://") {
+	// 	ret = fmt.Sprintf("http://%s", ret)
+	// }
 
 	return ret
 }
@@ -100,10 +122,6 @@ func (c *Client) GetResponse(method, uri, data string, headers map[string]string
 	}
 	for k, v := range headers {
 		req.Header.Set(k, v)
-	}
-	// 2022-09-16 修复, 若未设置Content-Type, 则添加默认
-	if req.Header.Get(CONTENT_TYPE) == "" {
-		req.Header.Set(CONTENT_TYPE, APPLICATION_JSON)
 	}
 
 	resp, err := c.client.Do(req)

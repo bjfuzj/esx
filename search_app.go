@@ -17,8 +17,7 @@ func Search(client *Client, in EasyRequest) (SearchResult, error) {
 	reqbody := req.Tostring()
 	uri := fmt.Sprintf("%s/_search?rest_total_hits_as_int=true&ignore_unavailable=true", strings.Join(req.Indices, ","))
 
-	code, rdata := client.GetResponse(
-		"GET", uri, reqbody, map[string]string{"Content-Type": "application/json"})
+	code, rdata := client.GetResponse("GET", uri, reqbody, map[string]string{})
 	if code >= 400 {
 		return SearchResult{}, errors.New("请求ES失败")
 	}
@@ -50,8 +49,7 @@ func SearchWithPool(in EasyRequest) (SearchResult, error) {
 		defer Pool.Put(client)
 	}
 
-	code, rdata := client.GetResponse(
-		"GET", uri, reqbody, map[string]string{"Content-Type": "application/json"})
+	code, rdata := client.GetResponse("GET", uri, reqbody, map[string]string{})
 	if code >= 400 {
 		return SearchResult{}, errors.New("请求ES失败")
 	}

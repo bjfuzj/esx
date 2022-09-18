@@ -72,6 +72,11 @@ func NewSearchRequest(in *EasyRequest) (SearchRequest, error) {
 		Indices: make([]string, 0),
 	}
 
+	// 未指定时间字段时设置默认值
+	if in.TimeField == "" {
+		in.TimeField = "@timestamp"
+	}
+
 	// if in.TimeFrom >= in.TimeTill {
 	// 	return ret, errors.New("请指定正确的时间范围")
 	// }
@@ -79,30 +84,36 @@ func NewSearchRequest(in *EasyRequest) (SearchRequest, error) {
 	// 先计算待查询的indices
 	// 计算时区偏移
 	// 注意timeFrom 和 timeTill 需要是毫秒值
-	if in.TimeFrom == 0 || in.TimeTill == 0 {
-		// 只要有一个没给出, 就无法计算index范围
-		// 除非额外请求_cat/indices获取所有列表
-		// 所以直接使用wildcard模式
-		ret.Indices = append(ret.Indices, fmt.Sprintf("%s-*", in.PreIndex))
+
+	if in.TimePattern == "" {
+		// 代表查询固定index
+		ret.Indices = append(ret.Indices, in.PreIndex)
 	} else {
-		timeFrom := in.TimeFrom + 3600*1000*in.TimeShift
-		timeTill := in.TimeTill + 3600*1000*in.TimeShift
-		indices := make(map[string]uint8, 0)
-		for timeFrom < timeTill {
-			indexsuffix := time.UnixMilli(timeFrom).Format(GetTimeTemps(in.TimePattern))
+		if in.TimeFrom == 0 || in.TimeTill == 0 {
+			// 只要有一个没给出, 就无法计算index范围
+			// 除非额外请求_cat/indices获取所有列表
+			// 所以直接使用wildcard模式
+			ret.Indices = append(ret.Indices, fmt.Sprintf("%s-*", in.PreIndex))
+		} else {
+			timeFrom := in.TimeFrom + 3600*1000*in.TimeShift
+			timeTill := in.TimeTill + 3600*1000*in.TimeShift
+			indices := make(map[string]uint8, 0)
+			for timeFrom < timeTill {
+				indexsuffix := time.UnixMilli(timeFrom).Format(GetTimeTemps(in.TimePattern))
+				key := fmt.Sprintf("%s-%s", in.PreIndex, indexsuffix)
+				indices[key] = 1
+				timeFrom += 86400 * 1000
+			}
+			indexsuffix := time.UnixMilli(timeTill).Format(GetTimeTemps(in.TimePattern))
 			key := fmt.Sprintf("%s-%s", in.PreIndex, indexsuffix)
 			indices[key] = 1
-			timeFrom += 86400 * 1000
-		}
-		indexsuffix := time.UnixMilli(timeTill).Format(GetTimeTemps(in.TimePattern))
-		key := fmt.Sprintf("%s-%s", in.PreIndex, indexsuffix)
-		indices[key] = 1
 
-		if len(indices) == 0 {
-			return ret, errors.New("待查询的index列表为空")
-		}
-		for k := range indices {
-			ret.Indices = append(ret.Indices, k)
+			if len(indices) == 0 {
+				return ret, errors.New("待查询的index列表为空")
+			}
+			for k := range indices {
+				ret.Indices = append(ret.Indices, k)
+			}
 		}
 	}
 
