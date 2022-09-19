@@ -16,13 +16,10 @@ func Exist(client *Client, indexname string) bool {
 // ExistWithPool 判断index是否存在
 // true => 存在, false => 不存在
 func ExistWithPool(indexname string) bool {
-	uri := fmt.Sprintf("_cat/indices?index=%s&format=json", indexname)
-
 	client := Pool.Get()
 	if client != nil {
 		defer Pool.Put(client)
 	}
 
-	code, _ := client.GetResponse("GET", uri, "", map[string]string{})
-	return code < 400
+	return Exist(client, indexname)
 }
